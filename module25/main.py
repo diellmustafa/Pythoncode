@@ -1,6 +1,8 @@
 from http.client import HTTPException
 from typing import List
 from fastapi import FastAPI
+from fastapi.openapi.utils import status_code_ranges
+
 import models
 from models import Movie, MovieCreate
 import database
@@ -30,3 +32,18 @@ def read_movie(movie_id: int):
         raise HTTPException(status_code=404, detail="Movie not found")
     return movie
 
+@app.put("/movies/{movie_id}", response_model=Movie)
+def update_movie(movie_id: int, movie:models.MovieCreate):
+    #Updated a movie
+    updated = database.update_movie(movie_id, movie)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Movie not found")
+    return models.Movie(id=movie_id, **movie.dict())
+
+@app.delete("/movies/{movie_id}", response_model=Movie)
+def delete_movie(movie_id: int):
+    #Deletes a movie
+    deleted = database.delete_movie(movie_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Movie not found")
+    return{"message": "Movie deleted successfully"}
