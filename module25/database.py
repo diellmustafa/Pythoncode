@@ -41,6 +41,7 @@ def create_movie(movie: MovieCreate) -> int:
 def read_movies():
     #Reatrieves all movies from the database
     connection = create_connection()
+    cursor = connection.cursor()
     cursor.execute("SELECT * FROM movies")
     rows = cursor.fetchall()
     connection.close()
