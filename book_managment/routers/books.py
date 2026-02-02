@@ -83,3 +83,15 @@ def update_book(
     conn.commit()
     conn.close()
     return Book(id=book_id, *book.dict())
+
+@router.delete("/{book_id}", response_model=dict)
+def delete_book(book_id: int, _: str = Depends(get_api_key)):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM books WHERE id = ?", (book_id,))
+    if cursor.rowcount == 0:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Book not found")
+    conn.commit()
+    conn.close()
+    return {"detail: Book deleted!"}
