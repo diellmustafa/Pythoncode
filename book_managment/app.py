@@ -266,13 +266,11 @@ def visualization_dashboard():
         st.warning("No book data available for visualization")
 
 st.sidebar.title("Navigation")
-option = st.sidebar.selectbox("Choose a dashboard", ["Authors Dashboard", "Books Dashboard", "Visualization"])
+option = st.sidebar.selectbox("Choose a dashboard", ["Authors Dashboard", "Visualization"])
 if option == "Visualization":
     visualization_dashboard()
 if api_key_input and validate_api_key(api_key_input):
     if option == "Authors Dashboard":
         dashboard_author(api_key_input)
-    if option == "Books Dashboard":
-        books_dashboard(api_key_input)
 else:
     st.error("Invalid API Key or API Key is missing")
