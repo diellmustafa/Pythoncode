@@ -5,53 +5,53 @@ from .database import get_connection
 
 
 def scrape_jobs(keyword: str = "python"):
-    url = f"https://remoteok.com/remote-{keyword}-jobs"
-    headers = {"User-Agent": "Mozilla/5.0"}
+    url = "https://realpython.github.io/fake-jobs/"
 
-    response = requests.get(url, headers=headers)
-
-    if response.status_code != 200:
-        raise Exception(f"Failed to fetch jobs: {response.status_code}")
-
+    response = requests.get(url)
     soup = BeautifulSoup(response.text, "html.parser")
 
-    listings = soup.find_all("tr", class_="job")
-
-    if not listings:
-        return []
+    job_cards = soup.find_all("div", class_="card-content")
 
     conn = get_connection()
     cursor = conn.cursor()
-
     jobs = []
 
-    for job in listings:
-        try:
-            title_tag = job.find("h2")
-            company_tag = job.find("h3")
+    for job in job_cards:
+        title = job.find("h2", class_="title")
+        company = job.find("h3", class_="company")
+        location = job.find("p", class_="location")
 
-            if not title_tag or not company_tag:
-                continue
+        if not title or not company or not location:
+            continue
 
-            job_id = str(uuid4())
+        title_text = title.get_text(strip=True)
+        company_text = company.get_text(strip=True)
+        location_text = location.get_text(strip=True)
 
-            cursor.execute(
-                "INSERT OR IGNORE INTO jobs (id, title, company, location, keyword) VALUES (?, ?, ?, ?, ?)",
-                (job_id, title_tag.text.strip(), company_tag.text.strip(), "Remote", keyword)
-            )
+        # Filter by keyword
+        if keyword.lower() not in title_text.lower():
+            continue
 
-            jobs.append({
-                "id": job_id,
-                "title": title_tag.text.strip(),
-                "company": company_tag.text.strip(),
-                "location": "Remote",
-                "keyword": keyword
-            })
+        job_id = str(uuid4())
 
-        except Exception as e:
-            print("Skipping job due to error:", e)
+        cursor.execute(
+            """
+            INSERT OR IGNORE INTO jobs (id, title, company, location, keyword)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (job_id, title_text, company_text, location_text, keyword),
+        )
+
+        jobs.append({
+            "id": job_id,
+            "title": title_text,
+            "company": company_text,
+            "location": location_text,
+            "keyword": keyword
+        })
 
     conn.commit()
     conn.close()
 
-    return jobss
+    print(f"Scraped {len(jobs)} jobs")
+    return jobs
