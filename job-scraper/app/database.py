@@ -16,13 +16,24 @@ def create_table():
     conn = get_connection()
     cursor = conn.cursor()
 
+    # Jobs table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS jobs (
             id TEXT PRIMARY KEY,
             title TEXT,
             company TEXT,
             location TEXT,
-            keyword TEXT
+            keyword TEXT,
+            user_id TEXT
+        )
+    """)
+
+    # Users table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id TEXT PRIMARY KEY,
+            username TEXT UNIQUE,
+            password TEXT
         )
     """)
 

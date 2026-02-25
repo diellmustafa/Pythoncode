@@ -4,7 +4,7 @@ from uuid import uuid4
 from .database import get_connection
 
 
-def scrape_jobs(keyword: str = "python"):
+def scrape_jobs(keyword: str, user_id: str):
     url = "https://realpython.github.io/fake-jobs/"
 
     response = requests.get(url)
@@ -36,10 +36,10 @@ def scrape_jobs(keyword: str = "python"):
 
         cursor.execute(
             """
-            INSERT OR IGNORE INTO jobs (id, title, company, location, keyword)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO jobs (id, title, company, location, keyword, user_id)
+VALUES (?, ?, ?, ?, ?, ?)
             """,
-            (job_id, title_text, company_text, location_text, keyword),
+            (job_id, title_text, company_text, location_text, keyword, user_id),
         )
 
         jobs.append({
@@ -47,7 +47,8 @@ def scrape_jobs(keyword: str = "python"):
             "title": title_text,
             "company": company_text,
             "location": location_text,
-            "keyword": keyword
+            "keyword": keyword,
+            "user_id": user_id #temp
         })
 
     conn.commit()

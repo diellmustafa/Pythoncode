@@ -11,3 +11,17 @@ class JobCreate(JobBase):
 
 class Job(JobBase):
     id: str
+
+class UserCreate(BaseModel):
+    username: str
+    password: str
+
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+
+class User(BaseModel):
+    id: str
+    username: str
