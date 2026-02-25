@@ -137,7 +137,7 @@ elif page == "Job Explorer":
 
         selected_job = st.selectbox(
             "Select job to save",
-            df[id_column]
+            df["title"]
         )
 
         if st.button("Save to My Jobs"):
