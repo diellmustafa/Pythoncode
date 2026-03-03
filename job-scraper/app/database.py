@@ -33,9 +33,11 @@ def create_table():
         CREATE TABLE IF NOT EXISTS users (
             id TEXT PRIMARY KEY,
             username TEXT UNIQUE,
-            password TEXT
+            password TEXT,
+            role TEXT DEFAULT 'user'
         )
     """)
 
     conn.commit()
     conn.close()
+

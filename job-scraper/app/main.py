@@ -1,6 +1,6 @@
 from uuid import uuid4
 from passlib.context import CryptContext
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI, Query, HTTPException, Depends
 from pydantic import BaseModel
 import sqlite3
 from .models import UserCreate, UserLogin, Job
@@ -14,9 +14,8 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # Create base tables
 create_table()
 
-# =========================
+
 # INIT SAVED JOBS TABLE
-# =========================
 def init_saved_jobs():
     conn = sqlite3.connect("jobs.db")
     cursor = conn.cursor()
@@ -32,16 +31,13 @@ def init_saved_jobs():
 
 init_saved_jobs()
 
-# =========================
 # ROOT
-# =========================
 @app.get("/")
 def root():
     return {"message": "Job Scraper API is running"}
 
-# =========================
-# SCRAPER (FIXED)
-# =========================
+
+# SCRAPER
 @app.post("/scrape/{keyword}")
 def scrape(keyword: str, username: str = Query(...)):
     conn = get_connection()
@@ -60,9 +56,8 @@ def scrape(keyword: str, username: str = Query(...)):
     jobs = scrape_jobs(keyword, user_id)
     return {"scraped_jobs": len(jobs)}
 
-# =========================
+
 # GET ALL JOBS
-# =========================
 @app.get("/jobs")
 def get_jobs(username: str = Query(...)):
     conn = get_connection()
@@ -88,9 +83,8 @@ def get_jobs(username: str = Query(...)):
 
     return [dict(row) for row in rows]
 
-# =========================
+
 # REGISTER
-# =========================
 @app.post("/register")
 def register(user: UserCreate):
     conn = get_connection()
@@ -107,18 +101,18 @@ def register(user: UserCreate):
     user_id = str(uuid4())
 
     cursor.execute(
-        "INSERT INTO users (id, username, password) VALUES (?, ?, ?)",
-        (user_id, user.username, hashed_password)
+        "INSERT INTO users (id, username, password, role) VALUES (?, ?, ?, ?)",
+        (user_id, user.username, hashed_password, "user")
     )
+
 
     conn.commit()
     conn.close()
 
     return {"message": "User registered successfully"}
 
-# =========================
+
 # LOGIN
-# =========================
 @app.post("/login")
 def login(user: UserLogin):
     conn = get_connection()
@@ -139,12 +133,12 @@ def login(user: UserLogin):
 
     return {
         "message": "Login successful",
-        "username": db_user["username"]
+        "username": db_user["username"],
+        "role": db_user["role"]
     }
 
-# =========================
-# SAVE JOB (FIXED ROUTE)
-# =========================
+
+# SAVE JOB
 class SaveJobRequest(BaseModel):
     username: str
     job_id: str
@@ -175,9 +169,8 @@ def save_job(data: SaveJobRequest):
 
     return {"message": "Job saved successfully"}
 
-# =========================
-# GET MY SAVED JOBS (FIXED)
-# =========================
+
+# GET MY SAVED JOBS
 @app.get("/my-jobs/{username}")
 def get_my_jobs(username: str):
     conn = sqlite3.connect("jobs.db")
@@ -197,3 +190,47 @@ def get_my_jobs(username: str):
     jobs = [dict(zip(columns, row)) for row in rows]
 
     return jobs
+
+def get_current_user(username: str):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+    user = cursor.fetchone()
+    conn.close()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return dict(user)
+
+
+def require_admin(username: str):
+    user = get_current_user(username)
+
+    if user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    return user
+
+@app.get("/admin/users")
+def get_all_users(username: str, admin=Depends(require_admin)):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id, username, role FROM users")
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [dict(row) for row in rows]
+
+@app.get("/admin/saved-jobs")
+def get_all_saved_jobs(username: str, admin=Depends(require_admin)):
+    conn = sqlite3.connect("jobs.db")
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM saved_jobs")
+    rows = cursor.fetchall()
+    conn.close()
+
+    return rows
