@@ -279,3 +279,48 @@ if st.session_state.role == "admin":
         if saved_response.status_code == 200:
             saved_df = pd.DataFrame(saved_response.json())
             st.metric("Total Saved Jobs (Global)", len(saved_df))
+
+        st.markdown("### 👥 Manage Users")
+
+        if not users_df.empty:
+
+            selected_user = st.selectbox(
+                "Select user",
+                users_df["username"]
+            )
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                if st.button("🗑 Delete User"):
+                    response = requests.delete(
+                        f"{API_URL}/admin/delete-user/{selected_user}",
+                        params={"username": st.session_state.username}
+                    )
+
+                    if response.status_code == 200:
+                        st.success("User deleted")
+                        st.rerun()
+                    else:
+                        st.error(response.text)
+
+            with col2:
+                new_role = st.selectbox(
+                    "Change Role To",
+                    ["user", "admin"]
+                )
+
+                if st.button("🔄 Update Role"):
+                    response = requests.put(
+                        f"{API_URL}/admin/change-role/{selected_user}",
+                        params={
+                            "username": st.session_state.username,
+                            "new_role": new_role
+                        }
+                    )
+
+                    if response.status_code == 200:
+                        st.success("Role updated")
+                        st.rerun()
+                    else:
+                        st.error(response.text)

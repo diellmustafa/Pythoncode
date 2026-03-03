@@ -234,3 +234,82 @@ def get_all_saved_jobs(username: str, admin=Depends(require_admin)):
     conn.close()
 
     return rows
+
+@app.delete("/admin/delete-user/{target_username}")
+def delete_user(
+    target_username: str,
+    username: str,
+    admin=Depends(require_admin)
+):
+    if target_username == username:
+        raise HTTPException(status_code=400, detail="Admin cannot delete themselves")
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Delete user's saved jobs
+    cursor.execute(
+        "DELETE FROM saved_jobs WHERE username = ?",
+        (target_username,)
+    )
+
+    # Delete user's scraped jobs
+    cursor.execute("""
+        DELETE FROM jobs
+        WHERE user_id = (
+            SELECT id FROM users WHERE username = ?
+        )
+    """, (target_username,))
+
+    # Delete user
+    cursor.execute(
+        "DELETE FROM users WHERE username = ?",
+        (target_username,)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return {"message": f"User '{target_username}' deleted successfully"}
+
+@app.put("/admin/change-role/{target_username}")
+def change_role(
+    target_username: str,
+    new_role: str,
+    username: str,
+    admin=Depends(require_admin)
+):
+    if new_role not in ["user", "admin"]:
+        raise HTTPException(status_code=400, detail="Invalid role")
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "UPDATE users SET role = ? WHERE username = ?",
+        (new_role, target_username)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return {"message": f"{target_username} is now {new_role}"}
+
+@app.delete("/admin/delete-saved/{saved_id}")
+def delete_saved_job(
+    saved_id: int,
+    username: str,
+    admin=Depends(require_admin)
+):
+    conn = sqlite3.connect("jobs.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "DELETE FROM saved_jobs WHERE id = ?",
+        (saved_id,)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return {"message": "Saved job deleted"}
