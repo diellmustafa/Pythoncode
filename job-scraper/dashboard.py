@@ -276,9 +276,7 @@ if st.session_state.role == "admin":
             st.metric("Total Users", len(users_df))
             st.dataframe(users_df, use_container_width=True)
 
-        if saved_response.status_code == 200:
-            saved_df = pd.DataFrame(saved_response.json())
-            st.metric("Total Saved Jobs (Global)", len(saved_df))
+        
 
         st.markdown("### 👥 Manage Users")
 
@@ -360,3 +358,6 @@ if st.session_state.role == "admin":
             df_saved = pd.DataFrame(saved_activity.json())
             st.dataframe(df_saved, use_container_width=True)
 
+        if saved_response.status_code == 200:
+            saved_df = pd.DataFrame(saved_response.json())
+            st.metric("Total Saved Jobs (Global)", len(saved_df))
