@@ -289,7 +289,7 @@ if st.session_state.role == "admin":
                 users_df["username"]
             )
 
-            col1, col2 = st.columns(2)
+            col1, col2, col3 = st.columns(3)
 
             with col1:
                 if st.button("🗑 Delete User"):
@@ -324,3 +324,39 @@ if st.session_state.role == "admin":
                         st.rerun()
                     else:
                         st.error(response.text)
+
+            with col3:
+                if st.button("🚫 Ban / Unban User"):
+                    response = requests.put(
+                        f"{API_URL}/admin/ban-user/{selected_user}",
+                        params={"username": st.session_state.username}
+                    )
+
+                    if response.status_code == 200:
+                        st.success("User banned")
+                        st.rerun()
+                    else:
+                        st.error(response.text)
+
+        st.markdown("### 📋 Job Scraping Activity")
+
+        activity = requests.get(
+            f"{API_URL}/admin/job-activity",
+            params={"username": st.session_state.username}
+        )
+
+        if activity.status_code == 200:
+            df_activity = pd.DataFrame(activity.json())
+            st.dataframe(df_activity, use_container_width=True)
+
+        st.markdown("### ⭐ Saved Jobs Activity")
+
+        saved_activity = requests.get(
+            f"{API_URL}/admin/saved-activity",
+            params={"username": st.session_state.username}
+        )
+
+        if saved_activity.status_code == 200:
+            df_saved = pd.DataFrame(saved_activity.json())
+            st.dataframe(df_saved, use_container_width=True)
+

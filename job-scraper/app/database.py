@@ -24,7 +24,8 @@ def create_table():
             company TEXT,
             location TEXT,
             keyword TEXT,
-            user_id TEXT
+            user_id TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
 
@@ -34,7 +35,8 @@ def create_table():
             id TEXT PRIMARY KEY,
             username TEXT UNIQUE,
             password TEXT,
-            role TEXT DEFAULT 'user'
+            role TEXT DEFAULT 'user',
+            is_active INTEGER DEFAULT 1
         )
     """)
 

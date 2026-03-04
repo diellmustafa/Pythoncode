@@ -131,6 +131,9 @@ def login(user: UserLogin):
     if not pwd_context.verify(user.password, stored_password):
         return {"error": "Invalid username or password"}
 
+    if db_user["is_active"] == 0:
+        return {"error": "Account is banned"}
+
     return {
         "message": "Login successful",
         "username": db_user["username"],
@@ -313,3 +316,62 @@ def delete_saved_job(
     conn.close()
 
     return {"message": "Saved job deleted"}
+
+@app.put("/admin/ban-user/{target_username}")
+def ban_user(
+    target_username: str,
+    username: str,
+    admin=Depends(require_admin)
+):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT is_active FROM users WHERE username = ?", (target_username,))
+    user = cursor.fetchone()
+
+    new_status = 0 if user["is_active"] == 1 else 1
+
+    cursor.execute(
+        "UPDATE users SET is_active = ? WHERE username = ?",
+        (new_status, target_username)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return {"message": f"{target_username} has been banned"}
+
+
+@app.get("/admin/job-activity")
+def job_activity(username: str, admin=Depends(require_admin)):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT jobs.title, jobs.company, users.username, jobs.created_at
+        FROM jobs
+        JOIN users ON jobs.user_id = users.id
+        ORDER BY jobs.created_at DESC
+    """)
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [dict(row) for row in rows]
+
+
+@app.get("/admin/saved-activity")
+def saved_activity(username: str, admin=Depends(require_admin)):
+    conn = sqlite3.connect("jobs.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT saved_jobs.id, saved_jobs.username, jobs.title, jobs.company
+        FROM saved_jobs
+        JOIN jobs ON saved_jobs.job_id = jobs.id
+    """)
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return rows
