@@ -3,6 +3,10 @@ import requests
 import pandas as pd
 import plotly.express as px
 
+# to launch frontend:
+# cd job-scraper
+# streamlit run dashboard.py
+
 
 st.set_page_config(
     page_title="Job Scraper Pro",

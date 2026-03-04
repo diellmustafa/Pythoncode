@@ -7,6 +7,10 @@ from .models import UserCreate, UserLogin, Job
 from .database import create_table, get_connection
 from .scraper import scrape_jobs
 
+# to run backend:
+# cd job-scraper
+# uvicorn app.main:app --reload
+
 app = FastAPI(title="Job Scraper API")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
