@@ -1,0 +1,9 @@
+streamlit
+pandas
+plotly-express
+fastapi
+beautifulsoup4
+dotenv
+pydantic
+passlib
+uvicorn
