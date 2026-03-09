@@ -9,7 +9,7 @@ import plotly.express as px
 
 
 st.set_page_config(
-    page_title="Job Scraper Pro",
+    page_title="Job Scraper",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
